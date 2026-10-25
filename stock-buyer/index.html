@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Buyer - Trading Platforms, Live Stock API &amp; Terminal</title>
+  <meta name="description" content="Explore a stock and crypto platform directory, market screener, and simulated paper-trading terminal. Demo only; not a brokerage or investment service.">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <p class="demo-disclaimer" role="note">
+      Public demo only — trades are simulated. No brokerage orders or real funds.
+    </p>
+
+    <!-- 1. LIVE TICKER TAPE (Scrolling Market Bar) -->
+    <div class="ticker-tape-wrap">
+      <div class="ticker-tape" id="tickerTapeTrack">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- 2. SITE HEADER & NAVIGATION -->
+    <header class="site-header">
+      <div class="brand-section" id="brandLogoBtn" onclick="location.reload()">
+        <div class="brand-logo-icon">▲</div>
+        <div class="brand-text">
+          <h1>STOCK BUYER</h1>
+          <span>Trading Platform &amp; Explorer</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" id="nav-btn-terminal" data-view="terminal">
+          <span>📈</span> Live Terminal
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-indian" data-view="indian">
+          <span>🇮🇳</span> Indian Stocks (4,000+)
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-ipo" data-view="ipo">
+          <span>🚀</span> IPO Central
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-matcher" data-view="matcher">
+          <span>🎯</span> Platform Matcher
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-screener" data-view="screener">
+          <span>🔍</span> Screener
+        </button>
+        <button class="nav-tab-btn" id="nav-btn-portfolio" data-view="portfolio">
+          <span>💼</span> Portfolio
+        </button>
+      </nav>
+
+      <!-- Header Right: Live Stock API Pill, Wallet & USER SECTION -->
+      <div class="header-actions">
+        <!-- Live API Status Pill -->
+        <div id="liveApiStatusPill" class="live-api-pill" title="Click to refresh market prices">
+          <span class="live-api-dot pulse"></span>
+          <span class="live-api-text">Connecting to Market API...</span>
+        </div>
+
+        <div class="account-pill" title="Virtual Paper Trading Funds">
+          <div>
+            <div class="account-label">Virtual Buying Power</div>
+            <div class="account-value" id="headerAccountBalance">$100,000.00</div>
+          </div>
+        </div>
+        <button class="btn-primary" id="btnAddFunds" title="Deposit Virtual Funds">
+          + Deposit
+        </button>
+        <button class="btn-icon" id="btnResetAccount" title="Reset Account to $100K">
+          ↺
+        </button>
+        <button class="btn-icon" id="btnToggleSound" title="Toggle Sound Alerts">
+          🔔
+        </button>
+
+        <!-- USER SECTION IN NAVBAR (Save Login Info, Profile, SQL Integration) -->
+        <div id="navbarUserSection">
+          <!-- Injected via js/auth.js: Sign In button or User Avatar with Saved Login Dropdown -->
+        </div>
+      </div>
+    </header>
+
+    <!-- 3. MAIN VIEWPORT -->
+    <main class="main-viewport">
+
+      <!-- ===================================================================
+           VIEW A: LIVE TRADING TERMINAL
+           =================================================================== -->
+      <section class="view-section active" id="view-terminal">
+        <div class="terminal-grid">
+
+          <!-- LEFT: WATCHLIST & ASSET SELECTOR -->
+          <aside class="ui-card watchlist-sidebar">
+            <div class="ui-card-header">
+              <span class="ui-card-title"><span>📊</span> Markets</span>
+              <span style="font-size: 11px; color: var(--accent-light); font-weight: 700;">Live Feed</span>
+            </div>
+
+            <div class="watchlist-search">
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="watchlistSearchInput" placeholder="Search symbol or company...">
+              </div>
+            </div>
+
+            <div class="filter-chips">
+              <button class="chip-btn active" data-category="all">All</button>
+              <button class="chip-btn" data-category="stock">Stocks</button>
+              <button class="chip-btn" data-category="crypto">Crypto</button>
+              <button class="chip-btn" data-category="etf">ETFs</button>
+              <button class="chip-btn" data-category="watchlist">Favorites</button>
+            </div>
+
+            <div class="watchlist-items" id="watchlistItemsContainer">
+              <!-- Injected via JavaScript -->
+            </div>
+          </aside>
+
+          <!-- CENTER: CHARTING & LOWER PANELS -->
+          <div class="center-workspace">
+
+            <!-- Main Chart Card -->
+            <div class="ui-card chart-card">
+              <!-- Active Asset Banner -->
+              <div class="active-asset-banner">
+                <div class="asset-title-block">
+                  <span class="asset-title-symbol" id="activeAssetSymbol">NVDA</span>
+                  <span class="asset-title-name" id="activeAssetName">NVIDIA Corporation</span>
+                </div>
+                <div class="asset-price-block">
+                  <span class="asset-current-price" id="activeAssetPrice">$138.25</span>
+                  <span class="asset-current-change up" id="activeAssetChange">+3.45 (+2.56%)</span>
+                </div>
+              </div>
+
+              <!-- Chart Toolbar -->
+              <div class="chart-toolbar">
+                <div class="timeframe-group">
+                  <button class="tf-btn active" data-tf="1D">1D</button>
+                  <button class="tf-btn" data-tf="1W">1W</button>
+                  <button class="tf-btn" data-tf="1M">1M</button>
+                  <button class="tf-btn" data-tf="1Y">1Y</button>
+                </div>
+                <div class="chart-tool-group">
+                  <button class="tool-btn active" id="btnChartCandle" title="Candlestick Chart">Candles</button>
+                  <button class="tool-btn" id="btnChartLine" title="Area Line Chart">Area</button>
+                  <button class="tool-btn active" id="btnToggleSMA" title="Toggle Moving Averages">SMA 20/50</button>
+                </div>
+              </div>
+
+              <!-- HTML5 Canvas Element -->
+              <div class="canvas-wrapper">
+                <canvas id="tradingChartCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Lower Tabs Card (Positions, Order Book, Trades, News) -->
+            <div class="ui-card lower-tabs-card">
+              <div class="lower-tab-nav">
+                <button class="subtab-btn active" data-tab="tab-positions">
+                  <span>💼</span> Open Positions
+                </button>
+                <button class="subtab-btn" data-tab="tab-orderbook">
+                  <span>📖</span> Order Book Depth
+                </button>
+                <button class="subtab-btn" data-tab="tab-trades">
+                  <span>📋</span> Order History
+                </button>
+                <button class="subtab-btn" data-tab="tab-news">
+                  <span>📰</span> Market News &amp; Sentiment
+                </button>
+              </div>
+
+              <!-- Subtab 1: Open Positions -->
+              <div class="subtab-content active" id="tab-positions">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Quantity</th>
+                      <th>Avg Buy Price</th>
+                      <th>Current Price</th>
+                      <th>Market Value</th>
+                      <th>Unrealized P&amp;L</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="positionsTableBody">
+                    <!-- Injected via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Subtab 2: Order Book -->
+              <div class="subtab-content" id="tab-orderbook">
+                <div class="orderbook-split">
+                  <div class="ob-side bids">
+                    <h4>Bids (Buy Orders)</h4>
+                    <div id="orderBookBids"></div>
+                  </div>
+                  <div class="ob-side asks">
+                    <h4>Asks (Sell Orders)</h4>
+                    <div id="orderBookAsks"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subtab 3: Trade History -->
+              <div class="subtab-content" id="tab-trades">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Time</th>
+                      <th>Asset</th>
+                      <th>Side</th>
+                      <th>Shares</th>
+                      <th>Exec Price</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ordersTableBody">
+                    <!-- Injected via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Subtab 4: News Feed -->
+              <div class="subtab-content" id="tab-news">
+                <div id="newsListContainer">
+                  <!-- Injected via JavaScript -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- RIGHT: ORDER EXECUTION FORM -->
+          <aside class="ui-card order-panel">
+            <div class="order-tabs">
+              <button class="order-tab-btn buy-tab active" id="orderTabBuy">BUY</button>
+              <button class="order-tab-btn sell-tab" id="orderTabSell">SELL</button>
+            </div>
+
+            <div class="order-form-body">
+              <div class="form-group">
+                <label class="form-label">
+                  <span>Order Type</span>
+                </label>
+                <select class="input-box" id="orderTypeSelect">
+                  <option value="MARKET">Market Order (Instant)</option>
+                  <option value="LIMIT">Limit Order (Target Price)</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="limitPriceGroup" style="display: none;">
+                <label class="form-label">
+                  <span>Limit Price ($)</span>
+                </label>
+                <input type="number" step="0.01" class="input-box" id="limitPriceInput" placeholder="0.00">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <span>Number of Shares</span>
+                </label>
+                <input type="number" min="0.001" step="any" class="input-box" id="orderSharesInput" placeholder="e.g. 10">
+              </div>
+
+              <!-- Quick Percent Buttons -->
+              <div class="pct-btn-group">
+                <button class="pct-btn" data-pct="25">25%</button>
+                <button class="pct-btn" data-pct="50">50%</button>
+                <button class="pct-btn" data-pct="75">75%</button>
+                <button class="pct-btn" data-pct="100">100%</button>
+              </div>
+
+              <!-- Order Summary Calculation -->
+              <div class="order-summary-box">
+                <div class="summary-line">
+                  <span>Estimated Price</span>
+                  <span id="orderEstPrice" style="font-family: var(--font-mono);">$0.00</span>
+                </div>
+                <div class="summary-line">
+                  <span>Trading Commission</span>
+                  <span style="color: var(--bull-green); font-weight: 700;">$0.00 (Zero Fee)</span>
+                </div>
+                <div class="summary-line">
+                  <span>Available Cash</span>
+                  <span id="availableCashDisplay" style="font-family: var(--font-mono);">$100,000.00</span>
+                </div>
+                <div class="summary-line total">
+                  <span>Total Est. Cost</span>
+                  <span id="orderEstTotal" style="color: var(--accent-cyan);">$0.00</span>
+                </div>
+              </div>
+
+              <button class="btn-submit-order buy" id="submitOrderBtn">
+                Buy NVDA
+              </button>
+
+              <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 4px;">
+                Virtual paper trading simulation • Real-time live execution
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW B: IPO CENTRAL & BUY IPO (PRIMARY MARKET)
+           =================================================================== -->
+      <section class="view-section" id="view-ipo">
+        <div class="platforms-hero" style="background: linear-gradient(180deg, rgba(14, 34, 62, 0.9) 0%, rgba(6, 15, 30, 0.9) 100%); border-color: rgba(56, 189, 248, 0.35);">
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 240, 255, 0.12); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 20px; padding: 4px 14px; margin-bottom: 12px;">
+            <span style="font-size: 14px;">🚀</span>
+            <span style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.8px;">Primary Market Bidding Hub</span>
+          </div>
+          <h2>Initial Public Offerings (IPO) Central</h2>
+          <p>
+            Bid for high-growth company shares at official issue prices before market listing. Track live subscription figures, Grey Market Premiums (GMP), and check your allotment status.
+          </p>
+
+          <div class="platform-filter-bar" style="margin-top: 18px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="chip-btn ipo-filter-btn active" data-filter="all">All IPOs</button>
+              <button class="chip-btn ipo-filter-btn" data-filter="active">🟢 Open for Bidding (Buy IPO)</button>
+              <button class="chip-btn ipo-filter-btn" data-filter="upcoming">⏳ Upcoming Issues</button>
+              <button class="chip-btn ipo-filter-btn" data-filter="listed">🎉 Recently Listed</button>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary);">
+              Live Bidding Support • <strong style="color: var(--accent-light);">UPI &amp; Paper Wallet</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- IPO Offerings Grid with "Buy IPO" on every active offering -->
+        <div class="ipo-grid" id="ipoGridContainer">
+          <!-- Injected via js/ipo.js -->
+        </div>
+
+        <!-- My Applied IPOs & Allotment Status Tracker -->
+        <div class="ui-card" style="padding: 20px; margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: var(--text-white); display: flex; align-items: center; gap: 8px;">
+                <span>📋</span> My Applied IPOs &amp; Allotment Tracker
+              </h3>
+              <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                Review your submitted IPO bids, blocked amounts, and real-time allotment results.
+              </p>
+            </div>
+            <span class="badge" style="background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan);">
+              Instant Bidding Confirmation
+            </span>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Application No.</th>
+                  <th>Company Name</th>
+                  <th>Bid Quantity</th>
+                  <th>Bid Price</th>
+                  <th>Total Blocked</th>
+                  <th>UPI ID</th>
+                  <th>Allotment Status</th>
+                </tr>
+              </thead>
+              <tbody id="myAppliedIposTableBody">
+                <!-- Injected via js/ipo.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW C: PLATFORM MATCHER QUIZ
+           =================================================================== -->
+      <section class="view-section" id="view-matcher">
+        <div class="quiz-container">
+          <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill" id="quizProgressFill"></div>
+          </div>
+
+          <h2 class="quiz-question-title" id="quizQuestionTitle">Which Trading Platform is Right For You?</h2>
+          <p class="quiz-question-sub" id="quizQuestionSub">Answer 4 quick questions to find your optimal broker matched to your experience, budget, and favorite assets.</p>
+
+          <div class="quiz-options" id="quizOptionsContainer">
+            <!-- Injected via JavaScript -->
+          </div>
+
+          <div id="quizResultBox" style="display: none;">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW D: STOCK & CRYPTO SCREENER
+           =================================================================== -->
+      <section class="view-section" id="view-screener">
+        <div class="ui-card" style="padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--text-white);">Stock &amp; Crypto Market Screener</h2>
+              <p style="font-size: 13px; color: var(--text-secondary);">Real-time multi-asset technical screen with live quotes</p>
+            </div>
+            <div class="search-input-wrap" style="width: 280px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="screenerSearchInput" placeholder="Filter by name, sector, symbol...">
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Company Name</th>
+                  <th>Sector</th>
+                  <th>Last Price</th>
+                  <th>24h Change</th>
+                  <th>Market Cap</th>
+                  <th>P/E Ratio</th>
+                  <th>52-Week Range</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="screenerTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW E: PORTFOLIO & ANALYTICS OVERVIEW
+           =================================================================== -->
+      <section class="view-section" id="view-portfolio">
+        <div class="portfolio-stat-cards">
+          <div class="p-card">
+            <div class="p-card-title">Total Portfolio Net Worth</div>
+            <div class="p-card-number" id="statNetWorth">$100,000.00</div>
+            <div class="p-card-change" style="color: var(--accent-light);">Cash + Active Holdings</div>
+          </div>
+          <div class="p-card">
+            <div class="p-card-title">Available Cash Balance</div>
+            <div class="p-card-number" id="statCash">$100,000.00</div>
+            <div class="p-card-change" style="color: var(--text-secondary);">Ready to deploy</div>
+          </div>
+          <div class="p-card">
+            <div class="p-card-title">Active Holdings Value</div>
+            <div class="p-card-number" id="statHoldings">$0.00</div>
+            <div class="p-card-change" style="color: var(--text-secondary);">Current market evaluation</div>
+          </div>
+          <div class="p-card">
+            <div class="p-card-title">All-Time Paper Trading P&amp;L</div>
+            <div class="p-card-number" id="statTotalPnl">$0.00 (0.00%)</div>
+            <div class="p-card-change">Cumulative performance</div>
+          </div>
+        </div>
+
+        <div class="ui-card" style="padding: 24px; margin-top: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: var(--text-white); margin-bottom: 12px;">
+            Active Asset Allocation &amp; Performance Summary
+          </h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+            Review your paper trading portfolio diversification across mega-cap equities, semiconductor leaders, and cryptocurrencies.
+          </p>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn-primary" onclick="switchView('terminal')">Go to Trading Terminal</button>
+            <button class="btn-secondary" id="pResetBtn" onclick="document.getElementById('btnResetAccount').click()">Reset Demo Account</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW F: 4,000 INDIAN COMPANIES & LIVE MOVING CHART (NSE / BSE)
+           =================================================================== -->
+      <section class="view-section" id="view-indian">
+
+        <!-- Indian Major Market Indices Bar -->
+        <div class="indian-indices-bar">
+          <div class="indian-index-card">
+            <span class="indian-index-title">NIFTY 50</span>
+            <span class="indian-index-price">24,852.15</span>
+            <span class="indian-index-change up">+142.30 (+0.58%)</span>
+          </div>
+          <div class="indian-index-card">
+            <span class="indian-index-title">BSE SENSEX</span>
+            <span class="indian-index-price">81,385.40</span>
+            <span class="indian-index-change up">+425.20 (+0.53%)</span>
+          </div>
+          <div class="indian-index-card">
+            <span class="indian-index-title">BANK NIFTY</span>
+            <span class="indian-index-price">51,460.90</span>
+            <span class="indian-index-change up">+390.10 (+0.76%)</span>
+          </div>
+          <div class="indian-index-card">
+            <span class="indian-index-title">NIFTY IT</span>
+            <span class="indian-index-price">42,120.30</span>
+            <span class="indian-index-change up">+510.40 (+1.23%)</span>
+          </div>
+          <div class="indian-index-card">
+            <span class="indian-index-title">NIFTY AUTO</span>
+            <span class="indian-index-price">25,480.00</span>
+            <span class="indian-index-change up">+295.60 (+1.17%)</span>
+          </div>
+        </div>
+
+        <!-- 1. DEDICATED LIVE MOVING CHART FOR SELECTED INDIAN COMPANY -->
+        <div class="ui-card chart-card" id="indianMovingChartCard" style="margin-bottom: 20px; height: 500px;">
+          <!-- Banner -->
+          <div class="active-asset-banner">
+            <div class="asset-title-block">
+              <span class="indian-flag-icon" style="font-size: 24px;">🇮🇳</span>
+              <div>
+                <span class="asset-title-symbol" id="indActiveSymbol">RELIANCE</span>
+                <span class="asset-title-name" id="indActiveName">Reliance Industries Ltd.</span>
+              </div>
+            </div>
+
+            <!-- Stats block -->
+            <div style="display: flex; gap: 18px; align-items: center;">
+              <div style="display: flex; flex-direction: column; text-align: right;">
+                <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Market Cap</span>
+                <span id="indActiveCap" style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--accent-light);">₹18.57 Lakh Cr</span>
+              </div>
+              <div style="display: flex; flex-direction: column; text-align: right;">
+                <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">P/E Ratio</span>
+                <span id="indActivePe" style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-white);">26.4</span>
+              </div>
+              <div class="asset-price-block">
+                <span class="asset-current-price" id="indActivePrice">₹2,745.50</span>
+                <span class="asset-current-change up" id="indActiveChange">+27.50 (+1.01%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Controls Bar -->
+          <div class="chart-toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge" style="background: rgba(0, 240, 255, 0.12); color: var(--accent-cyan); font-weight: 700;">
+                ● LIVE MOVING CHART (NSE)
+              </span>
+              <span style="font-size: 11px; color: var(--text-muted);">52W Range: <strong id="indActive52Range" style="color: var(--text-secondary); font-family: var(--font-mono);">₹2,221.00 - ₹3,217.90</strong></span>
+            </div>
+            <div class="chart-tool-group">
+              <button class="tool-btn active" id="btnIndChartCandle">Candles</button>
+              <button class="tool-btn" id="btnIndChartLine">Area</button>
+              <button class="tool-btn active" id="btnIndToggleSMA">SMA 20/50</button>
+            </div>
+          </div>
+
+          <!-- Canvas -->
+          <div class="canvas-wrapper">
+            <canvas id="indianChartCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- 2. DIRECTORY & SCREENER OF 4,000 INDIAN COMPANIES -->
+        <div class="ui-card" style="padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 style="font-size: 20px; font-weight: 800; color: var(--text-white);">
+                  🇮🇳 Indian Listed Companies (NSE &amp; BSE)
+                </h2>
+                <span class="badge" id="indianTotalCountBadge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-light); font-size: 11px;">
+                  4,000 Companies
+                </span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                Explore real-time data across Nifty 50, Midcap 150, Smallcap 250, and 20+ Indian industry sectors. Click any company to move the live chart!
+              </p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-input-wrap" style="width: 320px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="indianSearchInput" placeholder="Search 4,000 Indian stocks by name or symbol...">
+            </div>
+          </div>
+
+          <!-- Sector Filters & Market Cap Filter -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px;">
+            <div style="display: flex; gap: 6px; overflow-x: auto; max-width: 100%; padding-bottom: 4px;">
+              <button class="ind-sector-chip active" data-sector="all">All Sectors (4,000)</button>
+              <button class="ind-sector-chip" data-sector="IT & Software">IT &amp; Software</button>
+              <button class="ind-sector-chip" data-sector="Banking & Finance">Banking &amp; Finance</button>
+              <button class="ind-sector-chip" data-sector="Automotive & EV">Automotive &amp; EV</button>
+              <button class="ind-sector-chip" data-sector="Healthcare & Pharma">Pharma &amp; Healthcare</button>
+              <button class="ind-sector-chip" data-sector="Infrastructure & Construction">Infrastructure</button>
+              <button class="ind-sector-chip" data-sector="Renewable Energy & Power">Energy &amp; Power</button>
+              <button class="ind-sector-chip" data-sector="Metals & Mining">Metals &amp; Mining</button>
+              <button class="ind-sector-chip" data-sector="FMCG & Consumer Goods">FMCG</button>
+              <button class="ind-sector-chip" data-sector="Defense & Aerospace">Defense</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Cap:</span>
+              <select class="input-box" id="indianCapFilter" style="padding: 6px 12px; font-size: 12px; width: 140px;">
+                <option value="all">All Caps</option>
+                <option value="Large Cap">Large Cap (Top 100)</option>
+                <option value="Mid Cap">Mid Cap (150)</option>
+                <option value="Small Cap">Small Cap (250)</option>
+                <option value="Micro Cap">Micro Cap</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Paginated Table of 4,000 Companies -->
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Company Name</th>
+                  <th>Sector</th>
+                  <th>Market Cap Type</th>
+                  <th>Current Price (INR)</th>
+                  <th>24h Change</th>
+                  <th>Market Capitalization</th>
+                  <th>Live Chart</th>
+                </tr>
+              </thead>
+              <tbody id="indianStocksTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div id="indianPaginationControls"></div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===================================================================
+         4. MODALS & OVERLAYS
+         =================================================================== -->
+
+    <!-- AUTH MODAL (SIGN IN / REGISTER & SAVE LOGIN INFO) -->
+    <div class="modal-overlay" id="authModalOverlay">
+      <div class="modal-content" style="max-width: 460px;">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="authTabSignin">Sign In</button>
+          <button class="auth-tab-btn" id="authTabRegister">Create Account</button>
+          <button class="modal-close-btn" id="authModalClose" style="padding: 0 16px;">&times;</button>
+        </div>
+
+        <!-- Sign In Form -->
+        <div class="auth-form" id="authFormSignin">
+          <div class="auth-notice-banner">
+            <span>🗄️</span>
+            <span>Public demo mode: profiles are stored only in this browser. Do not enter real passwords or sensitive information.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email or Username</label>
+            <input type="text" class="input-box" id="authLoginInput" placeholder="trader@stockbuyer.io or AlexTrader">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="input-box" id="authPasswordInput" placeholder="••••••••">
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="authRememberMeCheck" checked>
+            <span><strong>Save my login info</strong> in this browser only</span>
+          </label>
+
+          <button class="btn-primary" id="btnSubmitSignin" style="justify-content: center; padding: 12px; margin-top: 6px;">
+            Sign In to Stock Buyer
+          </button>
+
+          <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+            This preview uses browser-only demo accounts. No shared account is needed.
+          </div>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-form" id="authFormRegister" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="input-box" id="regFullNameInput" placeholder="e.g. Alex Vance">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="input-box" id="regUsernameInput" placeholder="e.g. AlexTrader">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="input-box" id="regEmailInput" placeholder="alex@domain.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Avatar Badge</label>
+            <select class="input-box" id="regAvatarSelect">
+              <option value="⚡">⚡ Lightning Trader</option>
+              <option value="🐂">🐂 Bull Market Leader</option>
+              <option value="💎">💎 Diamond Hands</option>
+              <option value="👑">👑 Apex Investor</option>
+              <option value="🚀">🚀 Moonshot Speculator</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password (Min 6 chars)</label>
+            <input type="password" class="input-box" id="regPasswordInput" placeholder="••••••••">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" class="input-box" id="regConfirmPassInput" placeholder="••••••••">
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="regSaveInfoCheck" checked>
+            <span>Save my login info and credentials automatically</span>
+          </label>
+
+          <button class="btn-primary" id="btnSubmitRegister" style="justify-content: center; padding: 12px; margin-top: 6px;">
+            Create Free Account in SQL
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USER PROFILE & SAVED LOGIN CREDENTIALS MODAL -->
+    <div class="modal-overlay" id="userProfileModalOverlay">
+      <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-header">
+          <h3 class="modal-title">🔐 Saved Login Credentials &amp; Profile</h3>
+          <button class="modal-close-btn" id="userProfileModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="profile-info-grid">
+            <div class="prof-info-box">
+              <span class="prof-info-label">SQL User ID</span>
+              <span class="prof-info-value" id="profSqlIdDisplay">#1</span>
+            </div>
+            <div class="prof-info-box">
+              <span class="prof-info-label">Username</span>
+              <span class="prof-info-value" id="profUsernameDisplay">AlexTrader</span>
+            </div>
+            <div class="prof-info-box" style="grid-column: span 2;">
+              <span class="prof-info-label">Email Address</span>
+              <span class="prof-info-value" id="profEmailDisplay">trader@stockbuyer.io</span>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Display Name</label>
+            <input type="text" class="input-box" id="profFullNameInput">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Avatar Badge</label>
+            <select class="input-box" id="profAvatarSelect">
+              <option value="⚡">⚡ Lightning Trader</option>
+              <option value="🐂">🐂 Bull Market Leader</option>
+              <option value="💎">💎 Diamond Hands</option>
+              <option value="👑">👑 Apex Investor</option>
+              <option value="🚀">🚀 Moonshot Speculator</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Update Password (Optional)</label>
+            <input type="password" class="input-box" id="profNewPasswordInput" placeholder="Leave blank to keep current password">
+          </div>
+
+          <label class="checkbox-row" style="margin-bottom: 20px;">
+            <input type="checkbox" id="profAutoLoginCheck" checked>
+            <span>Keep me logged in automatically on this browser</span>
+          </label>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn-secondary" onclick="document.getElementById('userProfileModalClose').click()">Cancel</button>
+            <button class="btn-primary" id="btnSaveProfileChanges">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL DATABASE STATUS MODAL -->
+    <div class="modal-overlay" id="sqlInfoModalOverlay">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h3 class="modal-title">🗄️ Demo Data &amp; Account Information</h3>
+          <button class="modal-close-btn" id="sqlInfoModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 13px; color: var(--text-primary); margin-bottom: 14px;">
+            This public preview does not connect to a shared database. Demo profiles and paper-trading data stay in this browser and are not shared with other visitors. Do not enter real passwords or sensitive information.
+          </p>
+          <div style="background: var(--bg-deep); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; font-family: var(--font-mono); font-size: 12px; margin-bottom: 16px; line-height: 1.6;">
+            <div style="color: var(--accent-light);">PUBLIC DEMO</div>
+            <div style="color: var(--text-primary); margin-top: 4px;">Paper trading only — no real trades, funds, or brokerage connection.</div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn-primary" onclick="document.getElementById('sqlInfoModalClose').click()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Platform Modal -->
+    <div class="modal-overlay" id="platformModalOverlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="platformModalTitle">Platform Overview</h3>
+          <button class="modal-close-btn" id="platformModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="platformModalBody">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- BUY IPO APPLICATION MODAL -->
+    <div class="modal-overlay" id="buyIpoModalOverlay">
+      <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalIpoTitle">🚀 Buy IPO Application</h3>
+          <button class="modal-close-btn" id="buyIpoModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--bg-deep); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Price Band</span>
+              <div id="modalIpoPriceBand" style="font-family: var(--font-mono); font-weight: 700; color: var(--text-white); font-size: 13px;">₹1,865 - ₹1,960</div>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Lot Size</span>
+              <div id="modalIpoLotSize" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-light); font-size: 13px;">7 Shares / Lot</div>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Issue Size</span>
+              <div id="modalIpoIssueSize" style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); font-size: 13px;">₹27,870 Cr</div>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Cut-off Price</span>
+              <input type="hidden" id="modalIpoCutoffPrice" value="1960">
+              <div style="font-family: var(--font-mono); font-weight: 700; color: var(--bull-green); font-size: 13px;">Recommended (Highest Band)</div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">
+              <span>Number of Lots (Bid Quantity)</span>
+              <span style="color: var(--accent-light);" id="modalIpoTotalShares">7 Shares</span>
+            </label>
+            <input type="number" min="1" max="14" value="1" class="input-box" id="modalIpoLotsInput">
+            <span style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Max 14 lots for Retail Individual Investor (RII) quota (Under ₹2,00,000)</span>
+          </div>
+
+          <label class="checkbox-row" style="margin-bottom: 14px;">
+            <input type="checkbox" id="modalIpoCutoffCheck" checked>
+            <span><strong>Apply at Cut-off Price</strong> (Maximizes chances of allotment)</span>
+          </label>
+
+          <div class="form-group" id="modalIpoCustomPriceGroup" style="display: none; margin-bottom: 14px;">
+            <label class="form-label">Custom Bid Price (₹)</label>
+            <input type="number" step="1" class="input-box" id="modalIpoCustomPriceInput" placeholder="Enter bid price within band">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">UPI ID for Fund Mandate (ASBA Block)</label>
+            <input type="text" class="input-box" id="modalIpoUpiInput" value="trader@okhdfcbank" placeholder="e.g. yourname@okaxis / @okhdfcbank">
+            <span style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Funds remain in your bank account / paper wallet until share allotment.</span>
+          </div>
+
+          <div class="order-summary-box" style="margin-bottom: 18px;">
+            <div class="summary-line">
+              <span>Category</span>
+              <span style="color: var(--text-white); font-weight: 600;">Retail Individual (RII)</span>
+            </div>
+            <div class="summary-line">
+              <span>Allotment Priority</span>
+              <span style="color: var(--bull-green); font-weight: 700;">Standard Lottery Draw</span>
+            </div>
+            <div class="summary-line total">
+              <span>Total Amount to Block</span>
+              <span id="modalIpoTotalAmount" style="color: var(--accent-cyan); font-size: 18px;">₹13,720.00</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-secondary" onclick="document.getElementById('buyIpoModalClose').click()">Cancel</button>
+            <button class="btn-primary" id="btnConfirmIpoBid" style="padding: 10px 24px; font-size: 13px; font-weight: 800;">
+              Confirm &amp; Submit IPO Bid
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <!-- Pure Vanilla Scripts (No external dependencies, minimal technology) -->
+  <script src="js/data.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/trading.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/market-api.js"></script>
+  <script src="js/indian-stocks.js"></script>
+  <script src="js/ipo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

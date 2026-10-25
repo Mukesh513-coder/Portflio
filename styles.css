@@ -893,6 +893,26 @@ p {
   font-size: 8px;
 }
 
+.other-projects-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  justify-self: end;
+  padding: 10px 13px;
+  border: 1px solid rgba(212, 241, 109, 0.5);
+  border-radius: 3px;
+  color: var(--lime);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.other-projects-link:hover {
+  background: var(--lime);
+  color: var(--ink);
+}
+
 .other-projects-note span {
   margin-left: 8px;
   color: var(--lime);
@@ -1140,6 +1160,11 @@ p {
 
   .other-projects-note {
     grid-column: 2;
+  }
+
+  .other-projects-link {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 

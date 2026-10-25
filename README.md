@@ -17,3 +17,4 @@ Then visit `http://localhost:8000`.
 - Portfolio, experience, projects, education, and certification sections
 - Responsive navigation and layouts
 - Browser-viewable resume PDF and profile photo
+- Public Stock Buyer trading-demo frontend at `stock-buyer/` (backend database excluded)
